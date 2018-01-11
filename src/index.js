@@ -183,7 +183,7 @@ let TYPES = {
     joi._inner.children.forEach((property) => {
       if(property.schema._flags.presence !== 'forbidden') {
         schema.properties[property.key] = convert(property.schema);
-        if (property.schema._flags.presence === 'required') {
+        if (property.schema._flags.presence !== 'optional') {
           schema.required = schema.required || [];
           schema.required.push(property.key);
         }
