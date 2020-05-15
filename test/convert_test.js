@@ -1,5 +1,5 @@
 //@formatter:off
-var Joi         = require('joi'),
+var Joi         = require('@hapi/joi'),
     convert     = require('../src/index'),
     assert      = require('assert'),
     jsonSchema  = require('json-schema');
@@ -31,6 +31,18 @@ suite('convert', function () {
           type: 'object',
           properties: {},
           patterns: [],
+          additionalProperties: true,
+        };
+    assert.validate(schema, expected);
+  });
+
+  test('empty object will not allow additional properties', function () {
+    var joi = Joi.object({}),
+        schema = convert(joi),
+        expected = {
+          type: 'object',
+          properties: {},
+          patterns: [],
           additionalProperties: false,
         };
     assert.validate(schema, expected);
@@ -44,7 +56,7 @@ suite('convert', function () {
           title: 'Title',
           properties: {},
           patterns: [],
-          additionalProperties: false,
+          additionalProperties: true,
         };
     assert.validate(schema, expected);
   });
@@ -57,7 +69,7 @@ suite('convert', function () {
           title: 'Title',
           properties: {},
           patterns: [],
-          additionalProperties: false,
+          additionalProperties: true,
         };
     assert.validate(schema, expected);
   });
@@ -69,7 +81,7 @@ suite('convert', function () {
           type: 'object',
           properties: {},
           patterns: [],
-          additionalProperties: false,
+          additionalProperties: true,
           description: 'woot'
         };
     assert.validate(schema, expected);
@@ -82,7 +94,7 @@ suite('convert', function () {
           type: 'object',
           properties: {},
           patterns: [],
-          additionalProperties: false,
+          additionalProperties: true,
           example: { key: 'value' },
           examples: [{ key: 'value' }]
         };
@@ -96,7 +108,7 @@ suite('convert', function () {
           type: 'object',
           properties: {},
           patterns: [],
-          additionalProperties: false,
+          additionalProperties: true,
         };
     assert.validate(schema, expected);
   });
@@ -124,22 +136,28 @@ suite('convert', function () {
         expected = {
           type: 'object',
           properties: {
-            'string': {
+            string: {
               type: 'string'
             },
             'string default': {
               type: 'string',
-              'default': 'bar',
+              default: 'bar',
               description: 'bar desc'
             },
-            'number': {
+            number: {
               type: 'number'
             },
-            'boolean': {
+            boolean: {
               type: 'boolean'
             }
           },
           patterns: [],
+          required: [
+            "string",
+            "string default",
+            "number",
+            "boolean"
+          ],
           additionalProperties: false
         };
     assert.validate(schema, expected);
@@ -155,7 +173,6 @@ suite('convert', function () {
         schema = convert(joi),
         expected = {
           type: 'object',
-          required: ['boolean required'],
           properties: {
             'string': {
               type: 'string'
@@ -173,6 +190,12 @@ suite('convert', function () {
             }
           },
           patterns: [],
+          required: [
+            "string",
+            "string default",
+            "number",
+            "boolean required"
+          ],
           additionalProperties: false
         };
     assert.validate(schema, expected);
@@ -188,7 +211,7 @@ suite('convert', function () {
         schema = convert(joi),
         expected = {
           type: 'object',
-          required: ['boolean required'],
+          required: ["string", "string default", 'boolean required'],
           properties: {
             'string': {
               type: 'string'
@@ -240,6 +263,9 @@ suite('convert', function () {
         expected = {
           type: 'object',
           patterns: [],
+          required: [
+            "value"
+          ],
           additionalProperties: false,
           properties: {
             value: {
@@ -345,8 +371,20 @@ suite('convert', function () {
     let joi = Joi.string().allow(['a', 'b', '', null]),
         schema = convert(joi),
         expected = {
-          type: 'string',
-          'enum': ['a', 'b', '', null]
+          "anyOf": [
+            {
+              enum: [
+                'a',
+                'b',
+                '',
+                null,
+              ],
+              type: 'string'
+            },
+            {
+              type: 'string'
+            }
+          ]
         };
     //console.log('string allow: %s', util.inspect({type: joi._type, joi:joi, schema: schema}, {depth: 10}));
     assert.validate(schema, expected);
@@ -506,7 +544,7 @@ suite('convert', function () {
           },
           patterns: [],
           additionalProperties: false,
-          required: ['a']
+          required: ['a', 'b']
         };
     //console.log('when: %s', util.inspect({type:joi._type,schema:schema}, {depth: 10}));
     assert.validate(schema, expected);
